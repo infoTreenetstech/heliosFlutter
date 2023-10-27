@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -71,7 +72,7 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> signup() async {
     if (_formKey.currentState!.validate()) {
       final response = await http.post(
-        Uri.parse('http://localhost:8080/api/auth/signup'),
+        Uri.parse('http://192.168.1.18:8080/api/auth/signup'),
         headers: <String, String>{
           'Content-Type': 'application/json',
         },
@@ -94,7 +95,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 TextButton(
                   child: Text('OK'),
                   onPressed: () {
-                    Navigator.pushNamed(context, '/main');
+                    Navigator.pushNamed(context, '/');
                   },
                 ),
               ],
@@ -126,7 +127,9 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Registration')),
+      appBar: AppBar(
+        title: Text('Registration')
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -214,10 +217,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   Future<void> login() async {
-    print("ooooooooooooooooooooooo");
     if (_formKey.currentState!.validate()) {
       final response = await http.post(
-        Uri.parse('http://localhost:8080/api/auth/login'),
+        Uri.parse('http://192.168.1.18:8080/api/auth/login'),
         headers: <String, String>{
           'Content-Type': 'application/json',
         },

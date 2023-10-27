@@ -33,7 +33,7 @@ class _DataTableExampleState extends State<DataTableExample> {
   Future<List<Map<String, dynamic>>> fetchData() async {
     final response = await http.get(
       Uri.parse(
-          'http://localhost:8080/api/excel/alldata'), // Replace with your API endpoint
+          'http://192.168.1.18:8080/api/excel/alldata'), // Replace with your API endpoint
     );
 
     if (response.statusCode == 200) {
@@ -97,7 +97,7 @@ class _DataTableExampleState extends State<DataTableExample> {
       try {
         final response = await http.delete(
           Uri.parse(
-              'http://localhost:8080/api/excel/delete/$id'), // Replace with your API endpoint
+              'http://192.168.1.18:8080/api/excel/delete/$id'), // Replace with your API endpoint
         );
 
         if (response.statusCode == 200) {
@@ -165,7 +165,7 @@ class _DataTableExampleState extends State<DataTableExample> {
   Future<void> _updateRow(int id, ExcelData newData) async {
     try {
       final response = await http.put(
-        Uri.parse('http://localhost:8080/api/excel/update/$id'),
+        Uri.parse('http://192.168.1.18:8080/api/excel/update/$id'),
         body: jsonEncode(newData.toJson()),
         headers: {
           'Content-Type': 'application/json',
@@ -258,99 +258,89 @@ class _DataTableExampleState extends State<DataTableExample> {
           ),
           data.isNotEmpty
               ? SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    child: DataTable(
-                      columns: [
-                        DataColumn(
-                          label: Row(
-                            children: [
-                              Checkbox(
-                                value: isSelectAllChecked,
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    setState(() {
-                                      isSelectAllChecked = value;
-                                      selectedRows.clear();
-                                      if (value) {
-                                        selectedRows.addAll(
-                                            data.map((row) => row['id']));
-                                      }
-                                    });
-                                  }
-                                },
-                              ),
-                              Text('Select'),
-                            ],
-                          ),
-                        ),
-                        DataColumn(label: Text('ID')),
-                        DataColumn(label: Text('Name')),
-                        DataColumn(label: Text('Email')),
-                        DataColumn(label: Text('Income')),
-                        DataColumn(label: Text('Actions')),
-                      ],
-                      rows: data.map((row) {
-                        bool isSelected = selectedRows.contains(row['id']);
-
-                        return DataRow(
-                          cells: [
-                            DataCell(
-                              Checkbox(
-                                value: isSelected,
-                                onChanged: (bool? value) {
+                  child: DataTable(
+                    columns: [
+                      DataColumn(
+                        label: Row(
+                          children: [
+                            Checkbox(
+                              value: isSelectAllChecked,
+                              onChanged: (value) {
+                                if (value != null) {
                                   setState(() {
-                                    if (value != null) {
-                                      if (value) {
-                                        selectedRows.add(row['id']);
-                                      } else {
-                                        selectedRows.remove(row['id']);
-                                      }
+                                    isSelectAllChecked = value;
+                                    selectedRows.clear();
+                                    if (value) {
+                                      selectedRows
+                                          .addAll(data.map((row) => row['id']));
                                     }
                                   });
+                                }
+                              },
+                            ),
+                            Text('Select'),
+                          ],
+                        ),
+                      ),
+                      DataColumn(label: Text('ID')),
+                      DataColumn(label: Text('Name')),
+                      DataColumn(label: Text('Email')),
+                      DataColumn(label: Text('Income')),
+                      DataColumn(label: Text('Actions')),
+                    ],
+                    rows: data.map((row) {
+                      bool isSelected = selectedRows.contains(row['id']);
+
+                      return DataRow(
+                        cells: [
+                          DataCell(
+                            Checkbox(
+                              value: isSelected,
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  if (value != null) {
+                                    if (value) {
+                                      selectedRows.add(row['id']);
+                                    } else {
+                                      selectedRows.remove(row['id']);
+                                    }
+                                  }
+                                });
+                              },
+                            ),
+                          ),
+                          DataCell(Text(row['id'].toString())),
+                          DataCell(Text(row['name'].toString())),
+                          DataCell(Text(row['email'].toString())),
+                          DataCell(Text(row['income'].toString())),
+                          DataCell(Row(
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.edit),
+                                onPressed: () {
+                                  // Implement edit functionality
                                 },
                               ),
-                            ),
-                            DataCell(Text(row['id'].toString())),
-                            DataCell(Text(row['name'].toString())),
-                            DataCell(Text(row['email'].toString())),
-                            DataCell(Text(row['income'].toString())),
-                            DataCell(Row(
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.edit),
-                                  onPressed: () {
-                                    _showEditDialog(
-                                      row['id'],
-                                      ExcelData(
-                                        id: row['id'],
-                                        name: row['name'],
-                                        email: row['email'],
-                                        income: row['income'],
-                                      ),
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.delete),
-                                  onPressed: () {
-                                    _deleteRow(row['id']);
-                                  },
-                                ),
-                              ],
-                            )),
-                          ],
-                        );
-                      }).toList(),
-                    ),
+                              IconButton(
+                                icon: Icon(Icons.delete),
+                                onPressed: () {
+                                  // Implement delete functionality
+                                },
+                              ),
+                            ],
+                          )),
+                        ],
+                      );
+                    }).toList(),
                   ),
                 )
               : Center(
                   child: Text('No data available'),
                 ),
           ElevatedButton(
-            onPressed: _deleteSelectedRows,
+            onPressed: () {
+              // Implement delete selected rows functionality
+            },
             child: Text('Delete Selected Records'),
           ),
         ],
