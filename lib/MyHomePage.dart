@@ -16,45 +16,68 @@ class MyHomePage extends StatelessWidget {
     if (result != null) {
       PlatformFile file = result.files.single;
 
-      var request = http.MultipartRequest(
-          'POST', Uri.parse("${ApiConstants.baseUrl}excel/upload"));
-      request.files.add(http.MultipartFile.fromBytes(
-        'file', // Field name for the file (adjust as needed)
-        file.bytes as List<int>,
-        filename: file.name,
-      ));
-
-      var response = await request.send();
-      if (response.statusCode == 200) {
-        // Upload successful
-        print('File uploaded successfully');
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Success'),
-              content: Text('File uploaded successfully.'),
-              actions: <Widget>[
-                TextButton(
-                  child: Text('OK'),
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog
-                  },
-                ),
-              ],
-            );
-          },
+      List<int>? fileBytes = file.bytes;
+      if (fileBytes != null) {
+        var request = http.MultipartRequest(
+          'POST',
+          Uri.parse("${ApiConstants.baseUrl}excel/upload"),
         );
+        request.files.add(http.MultipartFile.fromBytes(
+          'file', // Field name for the file (adjust as needed)
+          fileBytes,
+          filename: file.name,
+        ));
+
+        var response = await request.send();
+        if (response.statusCode == 200) {
+          // Upload successful
+          print('File uploaded successfully');
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Success'),
+                content: Text('File uploaded successfully.'),
+                actions: <Widget>[
+                  TextButton(
+                    child: Text('OK'),
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close the dialog
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        } else {
+          // Error handling
+          print('Error uploading file: ${response.reasonPhrase}');
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Error'),
+                content: Text('Error uploading file: ${response.reasonPhrase}'),
+                actions: <Widget>[
+                  TextButton(
+                    child: Text('OK'),
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close the dialog
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        }
       } else {
-        // Handle the error, e.g., display an error message
-        print('Error uploading file: ${response.reasonPhrase}');
-        // ignore: use_build_context_synchronously
+        print('File bytes are null');
         showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text('Error'),
-              content: Text('Error uploading file: ${response.reasonPhrase}'),
+              content: Text('File bytes are null.'),
               actions: <Widget>[
                 TextButton(
                   child: Text('OK'),

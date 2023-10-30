@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 
+import 'ApiConstant.dart';
+
 class EmailTemplateForm extends StatefulWidget {
   @override
   _EmailTemplateFormState createState() => _EmailTemplateFormState();
@@ -21,7 +23,7 @@ class _EmailTemplateFormState extends State<EmailTemplateForm> {
 
     if (result != null) {
       setState(() {
-        _attachmentPaths = result.files.map((file) => file.path ?? "").toList();
+        _attachmentPaths.addAll(result.files.map((file) => file.path ?? ""));
       });
     }
   }
@@ -66,15 +68,14 @@ class _EmailTemplateFormState extends State<EmailTemplateForm> {
   }
 
   void createEmailTemplate() async {
-    const url =
-        'http://localhost:8080/api/email-templates/create'; // Replace with your server's API URL
+    const url = '${ApiConstants.baseUrl}email-templates/create';
     final headers = {'Content-Type': 'application/json'};
 
     final templateData = {
       'templateName': _templateNameController.text,
       'subject': _subjectController.text,
       'message': _messageController.text,
-      'attachmentPaths': _attachmentPaths, // Include the attachment paths
+      'attachmentPaths': _attachmentPaths,
     };
 
     final jsonBody = json.encode(templateData);
@@ -83,7 +84,6 @@ class _EmailTemplateFormState extends State<EmailTemplateForm> {
         await http.post(Uri.parse(url), headers: headers, body: jsonBody);
 
     if (response.statusCode == 200) {
-      // Email template created successfully
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Email template created successfully'),
@@ -91,7 +91,6 @@ class _EmailTemplateFormState extends State<EmailTemplateForm> {
         ),
       );
 
-      // Clear form fields and attachment paths
       _templateNameController.clear();
       _subjectController.clear();
       _messageController.clear();
@@ -99,7 +98,6 @@ class _EmailTemplateFormState extends State<EmailTemplateForm> {
         _attachmentPaths.clear();
       });
     } else {
-      // Handle the case where the creation of the email template fails
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to create email template'),
@@ -118,10 +116,14 @@ class _EmailTemplateFormState extends State<EmailTemplateForm> {
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               TextFormField(
                 controller: _templateNameController,
-                decoration: InputDecoration(labelText: 'Template Name'),
+                decoration: InputDecoration(
+                  labelText: 'Template Name',
+                  border: OutlineInputBorder(),
+                ),
                 validator: (value) {
                   if (value!.isEmpty) {
                     return 'Please enter a template name';
@@ -129,9 +131,13 @@ class _EmailTemplateFormState extends State<EmailTemplateForm> {
                   return null;
                 },
               ),
+              SizedBox(height: 16),
               TextFormField(
                 controller: _subjectController,
-                decoration: InputDecoration(labelText: 'Subject'),
+                decoration: InputDecoration(
+                  labelText: 'Subject',
+                  border: OutlineInputBorder(),
+                ),
                 validator: (value) {
                   if (value!.isEmpty) {
                     return 'Please enter a subject';
@@ -139,9 +145,13 @@ class _EmailTemplateFormState extends State<EmailTemplateForm> {
                   return null;
                 },
               ),
+              SizedBox(height: 16),
               TextFormField(
                 controller: _messageController,
-                decoration: InputDecoration(labelText: 'Message'),
+                decoration: InputDecoration(
+                  labelText: 'Message',
+                  border: OutlineInputBorder(),
+                ),
                 validator: (value) {
                   if (value!.isEmpty) {
                     return 'Please enter a message';
@@ -149,11 +159,42 @@ class _EmailTemplateFormState extends State<EmailTemplateForm> {
                   return null;
                 },
               ),
+              SizedBox(height: 16),
+
               ElevatedButton(
                 onPressed: pickAttachment,
                 child: Text('Select Attachments'),
               ),
-              Text('Selected Attachments: ${_attachmentPaths.join(', ')}'),
+
+              // Display Selected Attachments
+              Container(
+                height: 100, // Adjust the height according to your needs
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _attachmentPaths.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Row(
+                        children: [
+                          Text(
+                            _attachmentPaths[index].split('/').last,
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.clear),
+                            onPressed: () {
+                              setState(() {
+                                _attachmentPaths.removeAt(index);
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate() &&

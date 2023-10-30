@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:helios_application/ApiConstant.dart';
 import 'package:http/http.dart' as http;
 
 class DataTableExample extends StatefulWidget {
@@ -33,7 +34,7 @@ class _DataTableExampleState extends State<DataTableExample> {
   Future<List<Map<String, dynamic>>> fetchData() async {
     final response = await http.get(
       Uri.parse(
-          'http://192.168.1.18:8080/api/excel/alldata'), // Replace with your API endpoint
+          '${ApiConstants.baseUrl}excel/alldata'), // Replace with your API endpoint
     );
 
     if (response.statusCode == 200) {
@@ -67,8 +68,7 @@ class _DataTableExampleState extends State<DataTableExample> {
   }
 
   Future<void> _deleteRow(int id) async {
-    bool confirmed = false;
-    await showDialog(
+    bool confirmed = await showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -78,14 +78,13 @@ class _DataTableExampleState extends State<DataTableExample> {
             TextButton(
               child: Text('Cancel'),
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(false);
               },
             ),
             TextButton(
               child: Text('Delete'),
               onPressed: () {
-                confirmed = true;
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(true);
               },
             ),
           ],
@@ -93,18 +92,16 @@ class _DataTableExampleState extends State<DataTableExample> {
       },
     );
 
-    if (confirmed) {
+    if (confirmed != null && confirmed) {
       try {
         final response = await http.delete(
-          Uri.parse(
-              'http://192.168.1.18:8080/api/excel/delete/$id'), // Replace with your API endpoint
+          Uri.parse('${ApiConstants.baseUrl}excel/delete/$id'),
         );
 
         if (response.statusCode == 200) {
-          // Data deleted successfully, refresh the table data
           loadTableData();
         } else {
-          // Handle error, e.g., show an error message to the user.
+          // Handle error message
         }
       } catch (e) {
         // Handle any network or request errors.
@@ -113,8 +110,7 @@ class _DataTableExampleState extends State<DataTableExample> {
   }
 
   Future<void> _deleteSelectedRows() async {
-    bool confirmed = false;
-    await showDialog(
+    bool confirmed = await showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -124,14 +120,13 @@ class _DataTableExampleState extends State<DataTableExample> {
             TextButton(
               child: Text('Cancel'),
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(false);
               },
             ),
             TextButton(
               child: Text('Delete'),
               onPressed: () {
-                confirmed = true;
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(true);
               },
             ),
           ],
@@ -139,19 +134,18 @@ class _DataTableExampleState extends State<DataTableExample> {
       },
     );
 
-    if (confirmed) {
+    if (confirmed != null && confirmed) {
       List<int> selectedIds = selectedRows.toList();
       for (int id in selectedIds) {
         try {
           final response = await http.delete(
-            Uri.parse(
-                'http://localhost:8080/api/excel/delete/$id'), // Replace with your API endpoint
+            Uri.parse('${ApiConstants.baseUrl}excel/delete/$id'),
           );
 
           if (response.statusCode == 200) {
             selectedRows.remove(id);
           } else {
-            // Handle error, e.g., show an error message to the user.
+            // Handle error message
           }
         } catch (e) {
           // Handle any network or request errors.
@@ -162,35 +156,15 @@ class _DataTableExampleState extends State<DataTableExample> {
     }
   }
 
-  Future<void> _updateRow(int id, ExcelData newData) async {
-    try {
-      final response = await http.put(
-        Uri.parse('http://192.168.1.18:8080/api/excel/update/$id'),
-        body: jsonEncode(newData.toJson()),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        loadTableData();
-      } else {
-        print("update issue");
-      }
-    } catch (e) {
-      print(e);
-    }
-  }
-
-  Future<void> _showEditDialog(int id, ExcelData rowData) async {
+  Future<void> _showEditDialog(int id, Map<String, dynamic> rowData) async {
     TextEditingController nameController =
-        TextEditingController(text: rowData.name);
+        TextEditingController(text: rowData['name']);
     TextEditingController emailController =
-        TextEditingController(text: rowData.email);
+        TextEditingController(text: rowData['email']);
     TextEditingController incomeController =
-        TextEditingController(text: rowData.income);
+        TextEditingController(text: rowData['income']);
 
-    showDialog(
+    bool confirmed = await showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -216,26 +190,47 @@ class _DataTableExampleState extends State<DataTableExample> {
             TextButton(
               child: Text('Cancel'),
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(false);
               },
             ),
             TextButton(
               child: Text('Update'),
               onPressed: () {
-                ExcelData updatedData = ExcelData(
-                  id: id,
-                  name: nameController.text,
-                  email: emailController.text,
-                  income: incomeController.text,
-                );
-                _updateRow(id, updatedData);
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(true);
               },
             ),
           ],
         );
       },
     );
+
+    if (confirmed != null && confirmed) {
+      Map<String, dynamic> updatedData = {
+        'id': id,
+        'name': nameController.text,
+        'email': emailController.text,
+        'income': incomeController.text,
+      };
+      _updateRow(id, updatedData);
+    }
+  }
+
+  Future<void> _updateRow(int id, Map<String, dynamic> newData) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${ApiConstants.baseUrl}excel/update/$id'),
+        body: jsonEncode(newData),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        loadTableData();
+      } else {
+        // Handle update error
+      }
+    } catch (e) {
+      // Handle any network or request errors.
+    }
   }
 
   @override
@@ -256,118 +251,100 @@ class _DataTableExampleState extends State<DataTableExample> {
               decoration: InputDecoration(labelText: 'Search'),
             ),
           ),
-          data.isNotEmpty
-              ? SingleChildScrollView(
-                  child: DataTable(
-                    columns: [
-                      DataColumn(
-                        label: Row(
-                          children: [
-                            Checkbox(
-                              value: isSelectAllChecked,
-                              onChanged: (value) {
-                                if (value != null) {
+          Expanded(
+            child: Container(
+              height: MediaQuery.of(context).size.height - 200,
+              child: ListView(
+                scrollDirection: Axis.vertical,
+                children: <Widget>[
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columns: [
+                        DataColumn(
+                          label: Row(
+                            children: [
+                              Checkbox(
+                                value: isSelectAllChecked,
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    setState(() {
+                                      isSelectAllChecked = value;
+                                      selectedRows.clear();
+                                      if (value) {
+                                        selectedRows.addAll(data
+                                            .map((row) => row['id'] as int));
+                                      }
+                                    });
+                                  }
+                                },
+                              ),
+                              Text('Select'),
+                            ],
+                          ),
+                        ),
+                        DataColumn(label: Text('ID')),
+                        DataColumn(label: Text('Name')),
+                        DataColumn(label: Text('Email')),
+                        DataColumn(label: Text('Income')),
+                        DataColumn(label: Text('Actions')),
+                      ],
+                      rows: data.map((row) {
+                        bool isSelected = selectedRows.contains(row['id']);
+
+                        return DataRow(
+                          cells: [
+                            DataCell(
+                              Checkbox(
+                                value: isSelected,
+                                onChanged: (bool? value) {
                                   setState(() {
-                                    isSelectAllChecked = value;
-                                    selectedRows.clear();
-                                    if (value) {
-                                      selectedRows
-                                          .addAll(data.map((row) => row['id']));
+                                    if (value != null) {
+                                      if (value) {
+                                        selectedRows.add(row['id'] as int);
+                                      } else {
+                                        selectedRows.remove(row['id'] as int);
+                                      }
                                     }
                                   });
-                                }
-                              },
+                                },
+                              ),
                             ),
-                            Text('Select'),
+                            DataCell(Text(row['id'].toString())),
+                            DataCell(Text(row['name'].toString())),
+                            DataCell(Text(row['email'].toString())),
+                            DataCell(Text(row['income'].toString())),
+                            DataCell(Row(
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.edit),
+                                  onPressed: () {
+                                    _showEditDialog(row['id'] as int, row);
+                                  },
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.delete),
+                                  onPressed: () {
+                                    _deleteRow(row['id'] as int);
+                                  },
+                                ),
+                              ],
+                            )),
                           ],
-                        ),
-                      ),
-                      DataColumn(label: Text('ID')),
-                      DataColumn(label: Text('Name')),
-                      DataColumn(label: Text('Email')),
-                      DataColumn(label: Text('Income')),
-                      DataColumn(label: Text('Actions')),
-                    ],
-                    rows: data.map((row) {
-                      bool isSelected = selectedRows.contains(row['id']);
-
-                      return DataRow(
-                        cells: [
-                          DataCell(
-                            Checkbox(
-                              value: isSelected,
-                              onChanged: (bool? value) {
-                                setState(() {
-                                  if (value != null) {
-                                    if (value) {
-                                      selectedRows.add(row['id']);
-                                    } else {
-                                      selectedRows.remove(row['id']);
-                                    }
-                                  }
-                                });
-                              },
-                            ),
-                          ),
-                          DataCell(Text(row['id'].toString())),
-                          DataCell(Text(row['name'].toString())),
-                          DataCell(Text(row['email'].toString())),
-                          DataCell(Text(row['income'].toString())),
-                          DataCell(Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.edit),
-                                onPressed: () {
-                                  // Implement edit functionality
-                                },
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.delete),
-                                onPressed: () {
-                                  // Implement delete functionality
-                                },
-                              ),
-                            ],
-                          )),
-                        ],
-                      );
-                    }).toList(),
+                        );
+                      }).toList(),
+                    ),
                   ),
-                )
-              : Center(
-                  child: Text('No data available'),
-                ),
+                ],
+              ),
+            ),
+          ),
           ElevatedButton(
-            onPressed: () {
-              // Implement delete selected rows functionality
-            },
+            onPressed: _deleteSelectedRows,
             child: Text('Delete Selected Records'),
           ),
         ],
       ),
     );
-  }
-}
-
-class ExcelData {
-  int id;
-  String name;
-  String email;
-  String income;
-
-  ExcelData({
-    required this.id,
-    required this.name,
-    required this.email,
-    required this.income,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'email': email,
-      'income': income,
-    };
   }
 }

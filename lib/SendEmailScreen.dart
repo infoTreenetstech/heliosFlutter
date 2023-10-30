@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
+import 'ApiConstant.dart';
+
 class EmailComposeScreen extends StatefulWidget {
   @override
   _EmailComposeScreenState createState() => _EmailComposeScreenState();
@@ -108,7 +110,7 @@ class _EmailComposeScreenState extends State<EmailComposeScreen> {
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://localhost:8080/sendEmail'),
+        Uri.parse('${ApiConstants.baseUrl}sendEmail'),
       );
 
       if (attachmentPaths.isNotEmpty) {
